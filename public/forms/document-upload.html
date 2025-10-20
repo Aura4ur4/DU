@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Upload Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #F5F5DC;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            padding: 40px 20px;
+            text-align: center;
+            color: white;
+        }
+
+        .header-icon {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+        }
+
+        .form-content {
+            padding: 30px;
+        }
+
+        .required-note {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        .required-note .required {
+            color: #d32f2f;
+        }
+
+        .form-group {
+            margin-bottom: 28px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 15px;
+        }
+
+        .required {
+            color: #d32f2f;
+        }
+
+        .form-group input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            transition: all 0.3s;
+        }
+
+        .form-group input[type="text"]:focus {
+            outline: none;
+            border-color: #2196F3;
+            box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+        }
+
+        .file-info {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px dashed #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .file-input-wrapper input[type="file"]:hover {
+            border-color: #2196F3;
+            background: #f5f5f5;
+        }
+
+        .file-selected {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: #e8f5e9;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #2e7d32;
+            display: none;
+        }
+
+        .file-selected.show {
+            display: block;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 35px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-submit {
+            background: #2196F3;
+            color: white;
+        }
+
+        .btn-submit:hover {
+            background: #1976D2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .btn-submit:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-clear {
+            background: transparent;
+            color: #2196F3;
+            border: 2px solid #2196F3;
+        }
+
+        .btn-clear:hover {
+            background: #e3f2fd;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #666;
+            font-size: 12px;
+            margin-top: 25px;
+            padding-top: 25px;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .success-message {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background: #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+        }
+
+        .success-message h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .success-message p {
+            color: #666;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">☁️</div>
+            <h1>Documents to be uploaded</h1>
+        </div>
+
+        <div class="form-content" id="formContent">
+            
+            <div class="form-group">
+                <label>Name <span class="required">*</span></label>
+                <input type="text" id="name" placeholder="Your answer">
+                <div class="error-message" id="nameError">This field is required</div>
+            </div>
+
+            <div class="form-group">
+                <label>SAIL P.No.</label>
+                <input type="text" id="sailPNo" placeholder="Your answer">
+            </div>
+
+            <div class="form-group">
+                <label>Aadhar Card <span class="required">*</span></label>
+                <div class="file-info">Upload 1 supported file. PDF, document or image. Max 10 MB.</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="aadharCard" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="file-selected" id="aadharSelected"></div>
+                <div class="error-message" id="aadharError">This field is required</div>
+            </div>
+
+            <div class="form-group">
+                <label>PAN Card <span class="required">*</span></label>
+                <div class="file-info">Upload 1 supported file. PDF, document or image. Max 10 MB.</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="panCard" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="file-selected" id="panSelected"></div>
+                <div class="error-message" id="panError">This field is required</div>
+            </div>
+
+            <div class="form-group">
+                <label>Bank Passbook Details <span class="required">*</span></label>
+                <div class="file-info">Upload 1 supported file. PDF, document or image. Max 10 MB.</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="bankPassbook" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="file-selected" id="bankSelected"></div>
+                <div class="error-message" id="bankError">This field is required</div>
+            </div>
+
+            <div class="form-group">
+                <label>Blue Passport Size Photo <span class="required">*</span></label>
+                <div class="file-info">Upload 1 supported file. PDF, document or image. Max 10 MB.</div>
+                <div class="file-input-wrapper">
+                    <input type="file" id="passportPhoto" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+                <div class="file-selected" id="passportSelected"></div>
+                <div class="error-message" id="passportError">This field is required</div>
+            </div>
+
+            <div class="button-group">
+                <button type="button" class="btn btn-submit" id="submitBtn">Submit</button>
+                <button type="button" class="btn btn-clear" id="clearBtn">Clear form</button>
+            
+        <div class="success-message" id="successMessage">
+            <div class="success-icon">✓</div>
+            <h2>Successfully Submitted!</h2>
+            <p>Your documents have been uploaded successfully.</p>
+        </div>
+    </div>
+
+    <script>
+        // API endpoint - Replace with your actual backend URL
+        const API_URL = 'http://localhost:3000/api/document-upload/submit';
+
+        // File input handlers
+        const fileInputs = {
+            aadharCard: { input: 'aadharCard', display: 'aadharSelected', error: 'aadharError' },
+            panCard: { input: 'panCard', display: 'panSelected', error: 'panError' },
+            bankPassbook: { input: 'bankPassbook', display: 'bankSelected', error: 'bankError' },
+            passportPhoto: { input: 'passportPhoto', display: 'passportSelected', error: 'passportError' }
+        };
+
+        // Add event listeners for file inputs
+        Object.values(fileInputs).forEach(item => {
+            const input = document.getElementById(item.input);
+            const display = document.getElementById(item.display);
+            const error = document.getElementById(item.error);
+
+            input.addEventListener('change', function() {
+                if (this.files.length > 0) {
+                    const file = this.files[0];
+                    
+                    // Validate file size (10 MB)
+                    if (file.size > 10 * 1024 * 1024) {
+                        error.textContent = 'File size must be less than 10 MB';
+                        error.classList.add('show');
+                        display.classList.remove('show');
+                        this.value = '';
+                        return;
+                    }
+
+                    // Validate file type
+                    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
+                    if (!allowedTypes.includes(file.type)) {
+                        error.textContent = 'Only PDF, JPG, JPEG, and PNG files are allowed';
+                        error.classList.add('show');
+                        display.classList.remove('show');
+                        this.value = '';
+                        return;
+                    }
+
+                    display.textContent = '✓ ' + file.name;
+                    display.classList.add('show');
+                    error.classList.remove('show');
+                } else {
+                    display.classList.remove('show');
+                }
+            });
+        });
+
+        // Validate form
+        function validateForm() {
+            let isValid = true;
+            const errors = {};
+
+            // Validate name
+            const name = document.getElementById('name').value.trim();
+            if (!name) {
+                document.getElementById('nameError').classList.add('show');
+                isValid = false;
+            } else {
+                document.getElementById('nameError').classList.remove('show');
+            }
+
+            // Validate file uploads
+            Object.keys(fileInputs).forEach(key => {
+                const input = document.getElementById(fileInputs[key].input);
+                const error = document.getElementById(fileInputs[key].error);
+                
+                if (!input.files.length) {
+                    error.textContent = 'This field is required';
+                    error.classList.add('show');
+                    isValid = false;
+                }
+            });
+
+            return isValid;
+        }
+
+        // Submit form
+        document.getElementById('submitBtn').addEventListener('click', async function() {
+            if (!validateForm()) {
+                return;
+            }
+
+            const submitBtn = this;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading"></span> Submitting...';
+
+            try {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('name').value);
+                formData.append('sailPNo', document.getElementById('sailPNo').value);
+                formData.append('aadharCard', document.getElementById('aadharCard').files[0]);
+                formData.append('panCard', document.getElementById('panCard').files[0]);
+                formData.append('bankPassbook', document.getElementById('bankPassbook').files[0]);
+                formData.append('passportPhoto', document.getElementById('passportPhoto').files[0]);
+
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('formContent').style.display = 'none';
+                    document.getElementById('successMessage').classList.add('show');
+
+                    // Reset after 3 seconds
+                    setTimeout(() => {
+                        document.getElementById('formContent').style.display = 'block';
+                        document.getElementById('successMessage').classList.remove('show');
+                        clearForm();
+                    }, 3000);
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error submitting form. Please try again.');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit';
+            }
+        });
+
+        // Clear form
+        function clearForm() {
+            document.getElementById('name').value = '';
+            document.getElementById('sailPNo').value = '';
+            
+            Object.values(fileInputs).forEach(item => {
+                document.getElementById(item.input).value = '';
+                document.getElementById(item.display).classList.remove('show');
+                document.getElementById(item.error).classList.remove('show');
+            });
+            
+            document.getElementById('nameError').classList.remove('show');
+        }
+
+        document.getElementById('clearBtn').addEventListener('click', clearForm);
+        
+    </script>
+    
+</body>
+</html>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forms Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e1a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 15% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 70%, rgba(139, 92, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 70px 40px;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 70px;
+            animation: slideDown 0.7s ease-out;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.25);
+            color: #818cf8;
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        .header h1 {
+            font-size: 3.8rem;
+            font-weight: 700;
+            background: linear-gradient(120deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 18px;
+            letter-spacing: -1.5px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            color: #94a3b8;
+            max-width: 550px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 28px;
+            animation: fadeInUp 0.8s ease-out 0.3s both;
+        }
+
+        .card {
+            position: relative;
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 18px;
+            padding: 38px;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(139, 92, 246, 0.08));
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            border-color: rgba(99, 102, 241, 0.35);
+            box-shadow: 
+                0 20px 50px -12px rgba(99, 102, 241, 0.25),
+                0 0 30px -8px rgba(139, 92, 246, 0.15);
+        }
+
+        .card:hover::before {
+            opacity: 1;
+        }
+
+        .icon-box {
+            position: relative;
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 1.9rem;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+            transition: transform 0.4s ease;
+        }
+
+        .card:hover .icon-box {
+            transform: scale(1.08) rotate(3deg);
+        }
+
+        .content {
+            position: relative;
+        }
+
+        .card h2 {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 10px;
+            letter-spacing: -0.4px;
+        }
+
+        .card p {
+            color: #94a3b8;
+            line-height: 1.65;
+            margin-bottom: 24px;
+            font-size: 0.95rem;
+        }
+
+        .footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid rgba(34, 197, 94, 0.25);
+            color: #4ade80;
+            padding: 6px 13px;
+            border-radius: 18px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .dot {
+            width: 6px;
+            height: 6px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 38px;
+            height: 38px;
+            background: rgba(99, 102, 241, 0.12);
+            border-radius: 10px;
+            transition: all 0.35s ease;
+        }
+
+        .card:hover .arrow {
+            background: rgba(99, 102, 241, 0.2);
+            transform: translateX(4px);
+        }
+
+        .arrow svg {
+            width: 18px;
+            height: 18px;
+            stroke: #818cf8;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-35px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 50px 25px;
+            }
+
+            .header h1 {
+                font-size: 2.8rem;
+            }
+
+            .header {
+                margin-bottom: 50px;
+            }
+
+            .grid {
+                grid-template-columns: 1fr;
+                gap: 22px;
+            }
+
+            .card {
+                padding: 32px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 2.2rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background"></div>
+    
+    <div class="container">
+        <div class="header">
+            <span class="badge">Employee Portal</span>
+            <h1>Forms Center</h1>
+            <p>Submit all the forms quickly and securely. Choose the form you need below.</p>
+        </div>
+
+        <div class="grid">
+            <!-- Document Upload -->
+            <a href="/forms/document-upload.html" class="card">
+                <div class="icon-box">📄</div>
+                <div class="content">
+                    <h2>Document Upload</h2>
+                    <p>Upload and submit your documents securely. Supports multiple file formats including PDF, DOCX, and images.</p>
+                    <div class="footer">
+                        <span class="status">
+                            <span class="dot"></span>
+                            Active
+                        </span>
+                        <div class="arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Contact Form -->
+            <a href="/forms/contact-form" class="card">
+                <div class="icon-box">💼</div>
+                <div class="content">
+                    <h2>Travel Plan</h2>
+                    <p>Detail your journey: specify arrival date, time, and mode of transport (bus, train, etc.) for a smooth transition.</p>
+                    <div class="footer">
+                        <span class="status">
+                            <span class="dot"></span>
+                            Active
+                        </span>
+                        <div class="arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Registration Form -->
+            <a href="/forms/registration-form" class="card">
+                <div class="icon-box">✍️</div>
+                <div class="content">
+                    <h2>Pre-Boarding Forms</h2>
+                    <p>Complete your initial setup, submit necessary documents, and prepare for your first day with the team. Quick and straightforward enrollment process.</p>
+                    <div class="footer">
+                        <span class="status">
+                            <span class="dot"></span>
+                            Active
+                        </span>
+                        <div class="arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Feedback Form -->
+            <a href="/forms/feedback-form.html" class="card">
+                <div class="icon-box">💬</div>
+                <div class="content">
+                    <h2>Feedback Form</h2>
+                    <p>Share your thoughts, suggestions, and experiences. Your feedback helps us continuously improve our services.</p>
+                    <div class="footer">
+                        <span class="status">
+                            <span class="dot"></span>
+                            Active
+                        </span>
+                        <div class="arrow">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M5 12h14M12 5l7 7-7 7"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

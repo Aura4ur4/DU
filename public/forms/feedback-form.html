@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feedback Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            padding: 40px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+        .form-content {
+            padding: 40px;
+        }
+        .form-group {
+            margin-bottom: 25px;
+        }
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 15px;
+            font-family: inherit;
+        }
+        textarea {
+            min-height: 150px;
+            resize: vertical;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #2196F3;
+        }
+        .btn {
+            width: 100%;
+            padding: 14px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #1976D2;
+        }
+        .success {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+        .success.show {
+            display: block;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #2196F3;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💬 Feedback Form</h1>
+            <p>We'd love to hear from you!</p>
+        </div>
+        <div class="form-content" id="formContent">
+            <div class="form-group">
+                <label>Name *</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label>Email *</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="form-group">
+                <label>Message *</label>
+                <textarea id="message" required></textarea>
+            </div>
+            <button class="btn" id="submitBtn">Submit Feedback</button>
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+        <div class="success" id="successMessage">
+            <h2>✅ Thank You!</h2>
+            <p>Your feedback has been submitted successfully.</p>
+            <a href="/" class="back-link">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+
+            if (!name || !email || !message) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/feedback-form/submit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, email, message })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    document.getElementById('formContent').style.display = 'none';
+                    document.getElementById('successMessage').classList.add('show');
+                }
+            } catch (error) {
+                alert('Error submitting feedback');
+            }
+        });
+    </script>
+</body>
+</html>
