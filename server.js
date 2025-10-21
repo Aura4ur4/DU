@@ -575,10 +575,10 @@ app.listen(PORT, () => {
   console.log(`\n✅ Server running on http://localhost:${PORT}`);
   console.log(`\n📋 Available Pages:`);
   console.log(`   🏠 Landing Page: http://localhost:${PORT}`);
-  console.log(`   📄 Document Upload: http://localhost:${PORT}/public/forms/document-upload`);
-  console.log(`   💬 Feedback Form: http://localhost:${PORT}/public/forms/feedback-form`);
-  console.log(`   📧 Contact Form: http://localhost:${PORT}/public/forms/contact-form`);
-  console.log(`   ✍️  Registration Form: http://localhost:${PORT}/public/forms/registration-form`);
+  console.log(`   📄 Document Upload: http://localhost:${PORT}/forms/document-upload`);
+  console.log(`   💬 Feedback Form: http://localhost:${PORT}/forms/feedback-form`);
+  console.log(`   📧 Contact Form: http://localhost:${PORT}/forms/contact-form`);
+  console.log(`   ✍️  Registration Form: http://localhost:${PORT}/forms/registration-form`);
   console.log(`   👨‍💼 Admin Dashboard: http://localhost:${PORT}/admin`);
   console.log(`\n🔗 API Endpoints:`);
   console.log(`   POST /api/document-upload/submit`);
