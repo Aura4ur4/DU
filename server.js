@@ -214,7 +214,7 @@ app.get('/', (req, res) => {
 
 // Document upload form page
 app.get('/forms/document-upload', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'forms', 'document-upload.html'));
+  res.sendFile(path.join(__dirname, 'public', 'forms', 'document-upload'));
 });
 
 // Feedback form page
