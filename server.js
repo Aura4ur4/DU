@@ -13,7 +13,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Serve static files from the "public" folder
+// IMPORTANT: Serve static files from the "public" folder FIRST
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Serve uploads from /tmp in production, public/uploads in development
 const uploadsPath = process.env.NODE_ENV === 'production' 
   ? '/tmp/uploads' 
@@ -21,13 +23,6 @@ const uploadsPath = process.env.NODE_ENV === 'production'
 
 app.use('/uploads', express.static(uploadsPath));
 
-// IMPORTANT: Serve uploads directory (this allows /uploads/... URLs to work)
-app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
-
-// Add this line after your existing static file configurations
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
-// Database Configuration
 // Database Configuration
 require('dotenv').config();
 
@@ -43,21 +38,20 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Create MySQL connection pool
-
-const db = mysql.createPool({
-  host: process.env.MYSQLHOST,
-  user: process.env.MYSQLUSER,
-  password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQLDATABASE,
-  port: process.env.MYSQLPORT
-});
-
-// Create uploads directory if it doesn't exist (inside public folder)
-// Use /tmp for Railway (ephemeral storage)
+// Create uploads directory if it doesn't exist
 const uploadDir = process.env.NODE_ENV === 'production' 
   ? '/tmp/uploads' 
   : path.join(__dirname, 'public', 'uploads');
+
+// Create upload directory on startup
+(async () => {
+  try {
+    await fs.mkdir(uploadDir, { recursive: true });
+    console.log('✅ Upload directory created');
+  } catch (error) {
+    console.error('⚠️ Upload directory error:', error.message);
+  }
+})();
 
 // Configure Multer for DOCUMENT UPLOAD form
 const documentStorage = multer.diskStorage({
@@ -73,7 +67,7 @@ const documentStorage = multer.diskStorage({
   }
 });
 
-// Configure Multer for FEEDBACK form (if it has file uploads)
+// Configure Multer for FEEDBACK form
 const feedbackStorage = multer.diskStorage({
   destination: async (req, file, cb) => {
     const timestamp = Date.now().toString();
@@ -108,99 +102,98 @@ const feedbackUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5 MB limit
 });
 
-
-
-
 // Database initialization
 async function initDatabase() {
-  const connection = await pool.getConnection();
-  
   try {
-    // Don't create database - Railway already provides it
-    // Just create tables if they don't exist
+    const connection = await pool.getConnection();
     
-    // Create submissions table for document uploads
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS submissions (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        sail_p_no VARCHAR(100),
-        aadhar_card_path VARCHAR(500) NOT NULL,
-        pan_card_path VARCHAR(500) NOT NULL,
-        bank_passbook_path VARCHAR(500) NOT NULL,
-        passport_photo_path VARCHAR(500) NOT NULL,
-        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        email VARCHAR(255),
-        ip_address VARCHAR(45),
-        status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
-        notes TEXT,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        INDEX idx_name (name),
-        INDEX idx_sail_p_no (sail_p_no),
-        INDEX idx_submission_date (submission_date),
-        INDEX idx_status (status)
-      )
-    `);
-    
-    // Create feedback table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS feedback (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        message TEXT NOT NULL,
-        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_email (email),
-        INDEX idx_submission_date (submission_date)
-      )
-    `);
-    
-    // Create contact form table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS contact_form (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        subject VARCHAR(255),
-        message TEXT NOT NULL,
-        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_email (email),
-        INDEX idx_submission_date (submission_date)
-      )
-    `);
-    
-    // Create registration form table
-    await connection.query(`
-      CREATE TABLE IF NOT EXISTS registration_form (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        name VARCHAR(255) NOT NULL,
-        email VARCHAR(255) NOT NULL,
-        phone VARCHAR(20),
-        event_name VARCHAR(255),
-        submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        INDEX idx_email (email),
-        INDEX idx_submission_date (submission_date)
-      )
-    `);
-    
-    console.log('✅ Database initialized successfully');
+    try {
+      // Create submissions table
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS submissions (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          sail_p_no VARCHAR(100),
+          aadhar_card_path VARCHAR(500) NOT NULL,
+          pan_card_path VARCHAR(500) NOT NULL,
+          bank_passbook_path VARCHAR(500) NOT NULL,
+          passport_photo_path VARCHAR(500) NOT NULL,
+          submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          email VARCHAR(255),
+          ip_address VARCHAR(45),
+          status ENUM('pending', 'verified', 'rejected') DEFAULT 'pending',
+          notes TEXT,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          INDEX idx_name (name),
+          INDEX idx_sail_p_no (sail_p_no),
+          INDEX idx_submission_date (submission_date),
+          INDEX idx_status (status)
+        )
+      `);
+      
+      // Create feedback table
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS feedback (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_email (email),
+          INDEX idx_submission_date (submission_date)
+        )
+      `);
+      
+      // Create contact form table
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS contact_form (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          subject VARCHAR(255),
+          message TEXT NOT NULL,
+          submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_email (email),
+          INDEX idx_submission_date (submission_date)
+        )
+      `);
+      
+      // Create registration form table
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS registration_form (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          name VARCHAR(255) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          phone VARCHAR(20),
+          event_name VARCHAR(255),
+          submission_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_email (email),
+          INDEX idx_submission_date (submission_date)
+        )
+      `);
+      
+      console.log('✅ Database initialized successfully');
+    } finally {
+      connection.release();
+    }
   } catch (error) {
     console.error('❌ Database initialization error:', error.message);
-  } finally {
-    connection.release();
   }
 }
 
-
 // Initialize database on startup
-initDatabase().catch(console.error);
+initDatabase();
 
 // Helper function to convert file path to URL path
 function getUrlPath(filePath) {
-  // Convert: /path/to/public/uploads/... -> uploads/...
+  if (process.env.NODE_ENV === 'production') {
+    // In production, files are in /tmp/uploads
+    return filePath.replace('/tmp/', '');
+  }
+  // In development, remove 'public/' prefix
   return filePath
-    .replace(/\\/g, '/')  // Convert backslashes to forward slashes
-    .split('public/')[1]; // Remove everything before 'public/'
+    .replace(/\\/g, '/')
+    .split('public/')[1] || filePath;
 }
 
 // ============================================
@@ -219,7 +212,7 @@ app.get('/forms/document-upload', (req, res) => {
 
 // Feedback form page
 app.get('/forms/feedback-form', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'forms', 'feedback.html'));
+  res.sendFile(path.join(__dirname, 'public', 'forms', 'feedback-form.html'));
 });
 
 // Contact form page
@@ -248,9 +241,9 @@ app.post('/api/document-upload/submit', documentUpload.fields([
   { name: 'bankPassbook', maxCount: 1 },
   { name: 'passportPhoto', maxCount: 1 }
 ]), async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
+    connection = await pool.getConnection();
     const { name, sailPNo, email } = req.body;
     const files = req.files;
     
@@ -266,7 +259,7 @@ app.post('/api/document-upload/submit', documentUpload.fields([
     // Get client IP
     const ipAddress = req.ip || req.connection.remoteAddress;
     
-    // Convert file paths to URL paths (remove 'public/' prefix)
+    // Convert file paths to URL paths
     const aadharPath = getUrlPath(files.aadharCard[0].path);
     const panPath = getUrlPath(files.panCard[0].path);
     const bankPath = getUrlPath(files.bankPassbook[0].path);
@@ -278,16 +271,7 @@ app.post('/api/document-upload/submit', documentUpload.fields([
        (name, sail_p_no, aadhar_card_path, pan_card_path, 
         bank_passbook_path, passport_photo_path, email, ip_address) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        name,
-        sailPNo || null,
-        aadharPath,
-        panPath,
-        bankPath,
-        photoPath,
-        email || null,
-        ipAddress
-      ]
+      [name, sailPNo || null, aadharPath, panPath, bankPath, photoPath, email || null, ipAddress]
     );
     
     res.json({ 
@@ -304,27 +288,24 @@ app.post('/api/document-upload/submit', documentUpload.fields([
       error: error.message 
     });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
 // Get all document submissions
 app.get('/api/document-upload/submissions', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
+    connection = await pool.getConnection();
     const [rows] = await connection.query(
       'SELECT * FROM submissions ORDER BY submission_date DESC'
     );
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching submissions' 
-    });
+    res.status(500).json({ success: false, message: 'Error fetching submissions' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
@@ -333,16 +314,13 @@ app.get('/api/document-upload/submissions', async (req, res) => {
 // ============================================
 
 app.post('/api/feedback/submit', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
+    connection = await pool.getConnection();
     const { name, email, message } = req.body;
     
     if (!name || !email || !message) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields' 
-      });
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     
     const [result] = await connection.query(
@@ -350,40 +328,27 @@ app.post('/api/feedback/submit', async (req, res) => {
       [name, email, message]
     );
     
-    res.json({ 
-      success: true, 
-      message: 'Feedback submitted successfully',
-      feedbackId: result.insertId
-    });
-    
+    res.json({ success: true, message: 'Feedback submitted successfully', feedbackId: result.insertId });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error submitting feedback' 
-    });
+    res.status(500).json({ success: false, message: 'Error submitting feedback' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
 // Get all feedback
 app.get('/api/feedback/submissions', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
-    const [rows] = await connection.query(
-      'SELECT * FROM feedback ORDER BY submission_date DESC'
-    );
+    connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT * FROM feedback ORDER BY submission_date DESC');
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching feedback' 
-    });
+    res.status(500).json({ success: false, message: 'Error fetching feedback' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
@@ -392,16 +357,13 @@ app.get('/api/feedback/submissions', async (req, res) => {
 // ============================================
 
 app.post('/api/contact/submit', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
+    connection = await pool.getConnection();
     const { name, email, subject, message } = req.body;
     
     if (!name || !email || !message) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields' 
-      });
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     
     const [result] = await connection.query(
@@ -409,20 +371,12 @@ app.post('/api/contact/submit', async (req, res) => {
       [name, email, subject || null, message]
     );
     
-    res.json({ 
-      success: true, 
-      message: 'Contact form submitted successfully',
-      contactId: result.insertId
-    });
-    
+    res.json({ success: true, message: 'Contact form submitted successfully', contactId: result.insertId });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error submitting contact form' 
-    });
+    res.status(500).json({ success: false, message: 'Error submitting contact form' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
@@ -431,16 +385,13 @@ app.post('/api/contact/submit', async (req, res) => {
 // ============================================
 
 app.post('/api/registration/submit', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
+    connection = await pool.getConnection();
     const { name, email, phone, eventName } = req.body;
     
     if (!name || !email) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Missing required fields' 
-      });
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
     
     const [result] = await connection.query(
@@ -448,94 +399,58 @@ app.post('/api/registration/submit', async (req, res) => {
       [name, email, phone || null, eventName || null]
     );
     
-    res.json({ 
-      success: true, 
-      message: 'Registration submitted successfully',
-      registrationId: result.insertId
-    });
-    
+    res.json({ success: true, message: 'Registration submitted successfully', registrationId: result.insertId });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error submitting registration' 
-    });
+    res.status(500).json({ success: false, message: 'Error submitting registration' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
 // ============================================
-// LEGACY API ENDPOINTS (for backward compatibility)
+// LEGACY ENDPOINTS
 // ============================================
 
-// Keep old /api/submit endpoint working
-app.post('/api/submit', documentUpload.fields([
-  { name: 'aadharCard', maxCount: 1 },
-  { name: 'panCard', maxCount: 1 },
-  { name: 'bankPassbook', maxCount: 1 },
-  { name: 'passportPhoto', maxCount: 1 }
-]), async (req, res) => {
-  // Redirect to new endpoint handler
-  req.url = '/api/document-upload/submit';
-  return app._router.handle(req, res);
-});
-
-// Keep old /api/submissions endpoint working
 app.get('/api/submissions', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
-    const [rows] = await connection.query(
-      'SELECT * FROM submissions ORDER BY submission_date DESC'
-    );
+    connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT * FROM submissions ORDER BY submission_date DESC');
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching submissions' 
-    });
+    res.status(500).json({ success: false, message: 'Error fetching submissions' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
-// Get submission by ID
 app.get('/api/submissions/:id', async (req, res) => {
-  const connection = await pool.getConnection();
-  
+  let connection;
   try {
-    const [rows] = await connection.query(
-      'SELECT * FROM submissions WHERE id = ?',
-      [req.params.id]
-    );
+    connection = await pool.getConnection();
+    const [rows] = await connection.query('SELECT * FROM submissions WHERE id = ?', [req.params.id]);
     
     if (rows.length === 0) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Submission not found' 
-      });
+      return res.status(404).json({ success: false, message: 'Submission not found' });
     }
     
     res.json({ success: true, data: rows[0] });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error fetching submission' 
-    });
+    res.status(500).json({ success: false, message: 'Error fetching submission' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
-// Search submissions
 app.get('/api/search', async (req, res) => {
-  const connection = await pool.getConnection();
-  const { name, sailPNo } = req.query;
-  
+  let connection;
   try {
+    connection = await pool.getConnection();
+    const { name, sailPNo } = req.query;
+    
     let query = 'SELECT * FROM submissions WHERE 1=1';
     const params = [];
     
@@ -555,16 +470,13 @@ app.get('/api/search', async (req, res) => {
     res.json({ success: true, data: rows });
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Error searching submissions' 
-    });
+    res.status(500).json({ success: false, message: 'Error searching submissions' });
   } finally {
-    connection.release();
+    if (connection) connection.release();
   }
 });
 
-// Health check endpoint
+// Health check
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date() });
 });
@@ -572,25 +484,19 @@ app.get('/api/health', (req, res) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n✅ Server running on http://localhost:${PORT}`);
+  console.log(`\n✅ Server running on port ${PORT}`);
   console.log(`\n📋 Available Pages:`);
-  console.log(`   🏠 Landing Page: http://localhost:${PORT}`);
+  console.log(`   🏠 Landing: http://localhost:${PORT}`);
   console.log(`   📄 Document Upload: http://localhost:${PORT}/forms/document-upload`);
-  console.log(`   💬 Feedback Form: http://localhost:${PORT}/forms/feedback-form`);
-  console.log(`   📧 Contact Form: http://localhost:${PORT}/forms/contact-form`);
-  console.log(`   ✍️  Registration Form: http://localhost:${PORT}/forms/registration-form`);
-  console.log(`   👨‍💼 Admin Dashboard: http://localhost:${PORT}/admin`);
-  console.log(`\n🔗 API Endpoints:`);
-  console.log(`   POST /api/document-upload/submit`);
-  console.log(`   POST /api/feedback/submit`);
-  console.log(`   POST /api/contact/submit`);
-  console.log(`   POST /api/registration/submit`);
-  console.log(`   GET  /api/health\n`);
+  console.log(`   💬 Feedback: http://localhost:${PORT}/forms/feedback-form`);
+  console.log(`   📧 Contact: http://localhost:${PORT}/forms/contact-form`);
+  console.log(`   ✏️ Registration: http://localhost:${PORT}/forms/registration-form`);
+  console.log(`   👨‍💼 Admin: http://localhost:${PORT}/admin\n`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
-  console.log('\n🛑 Shutting down gracefully...');
+  console.log('\n🛑 Shutting down...');
   await pool.end();
   process.exit(0);
 });
