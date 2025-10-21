@@ -23,14 +23,20 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database Configuration
+// Database Configuration
 require('dotenv').config();
 
-const dbConfig = {
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
-};
+// Create MySQL connection pool
+const pool = mysql.createPool({
+  host: process.env.MYSQLHOST || process.env.DB_HOST,
+  user: process.env.MYSQLUSER || process.env.DB_USER,
+  password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD,
+  database: process.env.MYSQLDATABASE || process.env.DB_NAME,
+  port: process.env.MYSQLPORT || process.env.DB_PORT || 3306,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+});
 
 // Create MySQL connection pool
 
@@ -95,14 +101,16 @@ const feedbackUpload = multer({
   limits: { fileSize: 5 * 1024 * 1024 } // 5 MB limit
 });
 
+
+
+
 // Database initialization
 async function initDatabase() {
   const connection = await pool.getConnection();
   
   try {
-    // Create database if it doesn't exist
-    await connection.query(`CREATE DATABASE IF NOT EXISTS document_uploads`);
-    await connection.query(`USE document_uploads`);
+    // Don't create database - Railway already provides it
+    // Just create tables if they don't exist
     
     // Create submissions table for document uploads
     await connection.query(`
@@ -122,7 +130,8 @@ async function initDatabase() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         INDEX idx_name (name),
         INDEX idx_sail_p_no (sail_p_no),
-        INDEX idx_submission_date (submission_date)
+        INDEX idx_submission_date (submission_date),
+        INDEX idx_status (status)
       )
     `);
     
@@ -168,10 +177,13 @@ async function initDatabase() {
     `);
     
     console.log('✅ Database initialized successfully');
+  } catch (error) {
+    console.error('❌ Database initialization error:', error.message);
   } finally {
     connection.release();
   }
 }
+
 
 // Initialize database on startup
 initDatabase().catch(console.error);
