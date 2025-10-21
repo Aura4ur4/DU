@@ -14,7 +14,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the "public" folder
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve uploads from /tmp in production, public/uploads in development
+const uploadsPath = process.env.NODE_ENV === 'production' 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, 'public', 'uploads');
+
+app.use('/uploads', express.static(uploadsPath));
 
 // IMPORTANT: Serve uploads directory (this allows /uploads/... URLs to work)
 app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
@@ -49,8 +54,10 @@ const db = mysql.createPool({
 });
 
 // Create uploads directory if it doesn't exist (inside public folder)
-const uploadDir = path.join(__dirname, 'public', 'uploads');
-fs.mkdir(uploadDir, { recursive: true });
+// Use /tmp for Railway (ephemeral storage)
+const uploadDir = process.env.NODE_ENV === 'production' 
+  ? '/tmp/uploads' 
+  : path.join(__dirname, 'public', 'uploads');
 
 // Configure Multer for DOCUMENT UPLOAD form
 const documentStorage = multer.diskStorage({
