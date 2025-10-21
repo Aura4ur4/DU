@@ -33,7 +33,14 @@ const dbConfig = {
 };
 
 // Create MySQL connection pool
-const pool = mysql.createPool(dbConfig);
+
+const db = mysql.createPool({
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQLDATABASE,
+  port: process.env.MYSQLPORT
+});
 
 // Create uploads directory if it doesn't exist (inside public folder)
 const uploadDir = path.join(__dirname, 'public', 'uploads');
